@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}{{ evidence.evidence_number }} | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Evidence Artifact: {{ evidence.evidence_number }}{% endblock %}
+
+{% block content %}
+<!-- Tamper Warning Banner if Status is Compromised -->
+{% if evidence.status == 'Compromised' %}
+<div class="tamper-banner">
+    <div class="tamper-content">
+        <h3>🚨 INTEGRITY VIOLATION: HASH MISMATCH / COMPROMISED ARTIFACT</h3>
+        <p>A calculated SHA-256 digest failed to match the cryptographic baseline established during evidence acquisition. This artifact may have undergone tampering, storage bit rot, or unauthorized modification.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Evidence Overview Card -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span class="badge {% if evidence.status == 'Verified' %}badge-verified{% elif evidence.status == 'Compromised' %}badge-compromised{% elif evidence.status == 'In Custody' %}badge-custody{% else %}badge-collected{% endif %}">
+                Status: {{ evidence.status }}
+            </span>
+            <span class="badge badge-custody">{{ evidence.evidence_type }}</span>
+            {% for t in evidence.tags %}
+                <span class="badge" style="background: rgba(255,255,255,0.05); color: {{ t.color_code }}; border: 1px solid {{ t.color_code }}44;">
+                    ● {{ t.name }}
+                </span>
+            {% endfor %}
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            {% if evidence.file_path %}
+            <a href="{{ url_for('download_evidence', evidence_id=evidence.evidence_id) }}" class="btn btn-secondary btn-sm">
+                <span>⬇️</span> Download File
+            </a>
+            {% endif %}
+            <a href="{{ url_for('custody_report', evidence_id=evidence.evidence_id) }}" target="_blank" class="btn btn-secondary btn-sm">
+                <span>📜</span> Court Manifest
+            </a>
+            <button class="btn btn-primary btn-sm" data-modal-open="transfer-modal">
+                <span>🔗</span> Transfer Custody
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+            {{ evidence.evidence_name }}
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            {{ evidence.description or 'No acquisition notes provided.' }}
+        </p>
+
+        <!-- Cryptographic Baseline Box -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
+                Cryptographic Baseline (SHA-256 Digest)
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                <div class="hash-pill" style="font-size: 0.88rem; padding: 0.4rem 0.8rem; border-color: rgba(56, 189, 248, 0.4);">
+                    <span style="color: var(--cyber-blue); font-weight: 700;">{{ evidence.sha256_hash or 'No baseline hash recorded' }}</span>
+                    {% if evidence.sha256_hash %}
+                    <button class="copy-btn" data-hash="{{ evidence.sha256_hash }}" title="Copy full SHA-256 hash" style="font-size: 0.85rem;">📋 Copy</button>
+                    {% endif %}
+                </div>
+
+                <!-- Integrity Verification Action Buttons -->
+                <div style="display: flex; gap: 0.5rem;">
+                    <form method="POST" action="{{ url_for('verify_evidence', evidence_id=evidence.evidence_id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-emerald btn-sm">
+                            <span>🛡️</span> Verify Integrity Now
+                        </button>
+                    </form>
+
+                    <!-- Forensic Tamper Detection Simulation -->
+                    <form method="POST" action="{{ url_for('simulate_tamper', evidence_id=evidence.evidence_id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" title="Simulates a cryptographic tamper detection test">
+                            <span>⚠️</span> Test Tamper Detection
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metadata Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+            <div>
+                <span class="stat-title">Associated Case</span>
+                <div style="font-weight: 600; margin-top: 0.2rem;">
+                    <a href="{{ url_for('view_case', case_id=evidence.investigation.investigation_id) }}" style="color: var(--cyber-blue); text-decoration: none;">
+                        {{ evidence.investigation.case_number }}
+                    </a>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">{{ evidence.investigation.title }}</div>
+            </div>
+
+            <div>
+                <span class="stat-title">Storage Location</span>
+                <div style="font-weight: 600; color: var(--text-primary); margin-top: 0.2rem;">
+                    {{ evidence.storage_location }}
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Vault / Locker Assignment</div>
+            </div>
+
+            <div>
+                <span class="stat-title">Current Custodian</span>
+                <div style="font-weight: 600; color: var(--text-primary); margin-top: 0.2rem;">
+                    {{ evidence.designated_custodian.full_name }}
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">
+                    {{ evidence.designated_custodian.role }} ({{ evidence.designated_custodian.badge_number or 'No Badge' }})
+                </div>
+            </div>
+
+            <div>
+                <span class="stat-title">Original Collector</span>
+                <div style="font-weight: 600; color: var(--text-primary); margin-top: 0.2rem;">
+                    {{ evidence.collector.full_name }}
+                </div>
+                <div class="font-mono" style="font-size: 0.72rem; color: var(--text-muted);">
+                    {{ evidence.collected_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                </div>
+            </div>
+
+            <div>
+                <span class="stat-title">Artifact Size & MIME</span>
+                <div class="font-mono" style="font-weight: 600; color: var(--text-primary); margin-top: 0.2rem;">
+                    {{ evidence.formatted_size }}
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">
+                    {{ evidence.mime_type or 'binary/octet-stream' }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dual Panels: Integrity History & Chain of Custody History -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Cryptographic Integrity Verification Log -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">SHA-256 Verification Audits ({{ evidence.integrity_checks.count() }})</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="forensic-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Checked By</th>
+                        <th>Outcome</th>
+                        <th>Calculated SHA-256</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ic in evidence.integrity_checks %}
+                    <tr>
+                        <td class="font-mono" style="font-size: 0.72rem; white-space: nowrap;">
+                            {{ ic.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </td>
+                        <td>{{ ic.checker.full_name }}</td>
+                        <td>
+                            <span class="badge {% if ic.result == 'VERIFIED' %}badge-verified{% else %}badge-tampered{% endif %}">
+                                {{ ic.result }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="hash-pill" style="font-size: 0.72rem;">
+                                <span>{{ ic.calculated_hash[:10] }}...{{ ic.calculated_hash[-6:] }}</span>
+                                <button class="copy-btn" data-hash="{{ ic.calculated_hash }}" title="Copy hash">📋</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                            No historical integrity checks run yet. Click "Verify Integrity Now" above.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Complete Chain of Custody Record -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Chain of Custody Ledger ({{ evidence.custody_records.count() }})</h3>
+            <button class="btn btn-secondary btn-sm" data-modal-open="transfer-modal">
+                <span>➕</span> Transfer
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="forensic-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>From (Sender)</th>
+                        <th>To (Recipient)</th>
+                        <th>Purpose & Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coc in evidence.custody_records %}
+                    <tr>
+                        <td class="font-mono" style="font-size: 0.72rem; white-space: nowrap;">
+                            {{ coc.transfer_date.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                        <td>
+                            <div>{{ coc.sender.full_name }}</div>
+                            <div style="font-size: 0.68rem; color: var(--text-muted);">{{ coc.sender.badge_number or 'No Badge' }}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--cyber-blue);">{{ coc.receiver.full_name }}</div>
+                            <div style="font-size: 0.68rem; color: var(--text-muted);">{{ coc.receiver.badge_number or 'No Badge' }}</div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.78rem;">{{ coc.purpose }}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">📍 {{ coc.location or 'Vault' }}</div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                            No transfers recorded. Evidence is in original collector custody.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Tool Usage & Forensic Methodology -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Forensic Tool Applications & Processing History</h3>
+        <button class="btn btn-secondary btn-sm" data-modal-open="tool-usage-modal">
+            <span>🛠️</span> Log Tool Usage
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Forensic Tool</th>
+                    <th>Operator</th>
+                    <th>Action Executed</th>
+                    <th>Output Summary</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in evidence.tool_usages %}
+                <tr>
+                    <td class="font-mono" style="font-size: 0.72rem; white-space: nowrap;">
+                        {{ u.used_at.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+                    <td>
+                        <strong>{{ u.tool.name }}</strong> (v{{ u.tool.version }})
+                    </td>
+                    <td>{{ u.operator.full_name }}</td>
+                    <td>{{ u.action_type }}</td>
+                    <td style="font-size: 0.78rem; color: var(--text-secondary); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ u.output_summary or u.command_executed or 'None' }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                        No forensic tools recorded on this artifact.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Chain of Custody Transfer Modal -->
+<div class="modal-overlay" id="transfer-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Record Chain of Custody Transfer</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('transfer_custody') }}">
+            <input type="hidden" name="evidence_id" value="{{ evidence.evidence_id }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Evidence Item</label>
+                    <input type="text" class="form-control" readonly value="{{ evidence.evidence_number }} - {{ evidence.evidence_name }}">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Current Custodian (Sender)</label>
+                        <select name="transferred_from" class="form-control" required>
+                            <option value="{{ evidence.designated_custodian.user_id }}">
+                                {{ evidence.designated_custodian.full_name }} ({{ evidence.designated_custodian.role }})
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Transfer Recipient (New Custodian)</label>
+                        <select name="transferred_to" class="form-control" required>
+                            {% for u in users %}
+                                {% if u.user_id != evidence.designated_custodian.user_id %}
+                                <option value="{{ u.user_id }}">
+                                    {{ u.full_name }} ({{ u.role }} - {{ u.badge_number or 'No Badge' }})
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Reason & Legal Purpose of Custody Transfer</label>
+                    <textarea name="purpose" class="form-control" rows="2" required placeholder="e.g. Relocating to Forensic Sandbox Lab for dynamic reverse engineering"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">New Secure Physical / Digital Storage Location</label>
+                    <input type="text" name="location" class="form-control" required value="Forensic Isolation Lab Room 204">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Authorization / Legal Instrument Reference</label>
+                    <input type="text" name="authorization_notes" class="form-control" placeholder="Search Warrant #SW-2026-XXXX / Court Order">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <span>🔗</span> Execute Atomic Transfer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tool Usage Modal -->
+<div class="modal-overlay" id="tool-usage-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Record Forensic Tool Application</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('log_tool_usage', evidence_id=evidence.evidence_id) }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Select Validated Forensic Tool</label>
+                    <select name="tool_id" class="form-control" required>
+                        {% for t in forensic_tools %}
+                        <option value="{{ t.tool_id }}">{{ t.name }} (v{{ t.version }} - {{ t.tool_type }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Forensic Action / Procedure</label>
+                    <input type="text" name="action_type" class="form-control" required placeholder="e.g. Bit-stream Acquisition / Memory Dump Triage / File Carving">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Executed Command Line / Method</label>
+                    <input type="text" name="command_executed" class="form-control font-mono" placeholder="vol.py -f dump.raw windows.pslist">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Output / Forensic Result Summary</label>
+                    <textarea name="output_summary" class="form-control" rows="3" placeholder="Summary of findings, hashes generated, or zero-bad-sector confirmation..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Log Tool Action</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

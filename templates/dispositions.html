@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Evidence Dispositions | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Evidence Dispositions & Court Exhibits{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="max-width: 400px; width: 100%;">
+        <input type="text" data-table-search="dispositions-table" class="form-control" placeholder="Search evidence #, disposition type, or reason...">
+    </div>
+
+    <div>
+        <button class="btn btn-primary" data-modal-open="request-disp-modal">
+            <span>⚖️</span> Request Evidence Disposition
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Evidentiary Retention, Destruction & Court Presentation Ledger</h3>
+        <span class="chart-badge">LEGAL COMPLIANCE</span>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table" id="dispositions-table">
+            <thead>
+                <tr>
+                    <th>Disp ID</th>
+                    <th>Evidence Item</th>
+                    <th>Disposition Type</th>
+                    <th>Requested By</th>
+                    <th>Authorization Ref</th>
+                    <th>Status</th>
+                    <th>Approved By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in dispositions %}
+                <tr>
+                    <td class="font-mono" style="color: var(--text-muted); font-size: 0.75rem;">
+                        #{{ d.disposition_id }}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('view_evidence', evidence_id=d.evidence.evidence_id) }}" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;" class="font-mono">
+                            {{ d.evidence.evidence_number }}
+                        </a>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">{{ d.evidence.evidence_name }}</div>
+                    </td>
+                    <td>
+                        <strong style="color: var(--text-primary);">{{ d.disposition_type }}</strong>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">{{ d.reason }}</div>
+                    </td>
+                    <td>
+                        {{ d.requester.full_name }}
+                        <div class="font-mono" style="font-size: 0.7rem; color: var(--text-muted);">{{ d.created_at.strftime('%Y-%m-%d') }}</div>
+                    </td>
+                    <td>
+                        <span style="color: var(--warning-amber); font-size: 0.75rem;">
+                            {{ d.legal_authorization or 'Internal Policy Rule' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if d.status == 'Approved' or d.status == 'Completed' %}badge-verified{% elif d.status == 'Pending' %}badge-medium{% else %}badge-critical{% endif %}">
+                            {{ d.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {{ d.approver.full_name if d.approver else 'Pending Review' }}
+                    </td>
+                    <td>
+                        {% if d.status == 'Pending' and session.get('role') in ['Admin', 'Lead Investigator'] %}
+                        <form method="POST" action="{{ url_for('approve_disposition', disposition_id=d.disposition_id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-emerald btn-sm">Approve</button>
+                        </form>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">{{ d.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No evidence disposition orders currently pending or logged.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Request Disposition Modal -->
+<div class="modal-overlay" id="request-disp-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Request Legal Evidence Disposition</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('create_disposition') }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Evidence Artifact</label>
+                    <select name="evidence_id" class="form-control" required>
+                        {% for ev in all_evidence %}
+                        <option value="{{ ev.evidence_id }}">{{ ev.evidence_number }} - {{ ev.evidence_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Disposition Order Type</label>
+                    <select name="disposition_type" class="form-control" required>
+                        <option value="Permanent Archive">Permanent Archive (7+ Year Evidentiary Vault)</option>
+                        <option value="Court Presentation">Court Presentation (Trial Exhibit Markings)</option>
+                        <option value="Cryptographic Shredding">Cryptographic Shredding (DoD 5220.22-M Wipe)</option>
+                        <option value="Return to Legal Owner">Return to Legal Owner (With Custody Signoff)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Legal Authorization / Subpoena / Court Docket</label>
+                    <input type="text" name="legal_authorization" class="form-control" placeholder="e.g. Fed. R. Evid. 902(14) Order #2026-CV-99">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Formal Reason & Legal Basis</label>
+                    <textarea name="reason" class="form-control" rows="3" required placeholder="Specify trial outcome, retention statutory expiration, or legal owner clearance..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Submit Disposition Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

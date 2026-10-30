@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chain of Custody Manifest | {{ evidence.evidence_number }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            color: #0f172a;
+            padding: 2.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        .header {
+            border-bottom: 3px solid #0f172a;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .header h1 {
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+        .header p {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin: 0.2rem 0 0;
+        }
+        .meta-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+        .meta-field strong {
+            display: block;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.05em;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            font-size: 0.82rem;
+        }
+        th {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+        .signatures {
+            margin-top: 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+        .sig-line {
+            border-top: 1px solid #0f172a;
+            padding-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #475569;
+        }
+        .print-btn {
+            background: #0284c7;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">🖨️ Print Legal Manifest</button>
+
+    <div class="header">
+        <div>
+            <h1>Official Chain of Custody Record</h1>
+            <p>Digital Forensics Laboratory & Evidentiary Archive</p>
+        </div>
+        <div style="text-align: right;">
+            <div class="mono" style="font-weight: 700; font-size: 1.1rem;">{{ evidence.evidence_number }}</div>
+            <p>Generated: {{ current_time.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+        </div>
+    </div>
+
+    <div class="meta-box">
+        <div class="meta-field">
+            <strong>Evidence Item Description</strong>
+            <div>{{ evidence.evidence_name }}</div>
+        </div>
+        <div class="meta-field">
+            <strong>Associated Case Dossier</strong>
+            <div>{{ evidence.investigation.case_number }} - {{ evidence.investigation.title }}</div>
+        </div>
+        <div class="meta-field">
+            <strong>Evidence Classification</strong>
+            <div>{{ evidence.evidence_type }} ({{ evidence.formatted_size }})</div>
+        </div>
+        <div class="meta-field">
+            <strong>Initial Collection Officer</strong>
+            <div>{{ evidence.collector.full_name }} (Badge: {{ evidence.collector.badge_number or 'N/A' }})</div>
+        </div>
+        <div class="meta-field" style="grid-column: span 2;">
+            <strong>Cryptographic Baseline Hash (SHA-256)</strong>
+            <div class="mono" style="word-break: break-all; font-weight: 700; color: #0f172a;">{{ evidence.sha256_hash }}</div>
+        </div>
+        <div class="meta-field">
+            <strong>Current Custodian of Record</strong>
+            <div>{{ evidence.designated_custodian.full_name }} (Badge: {{ evidence.designated_custodian.badge_number or 'N/A' }})</div>
+        </div>
+        <div class="meta-field">
+            <strong>Current Physical Storage Location</strong>
+            <div>{{ evidence.storage_location }}</div>
+        </div>
+    </div>
+
+    <h3>Custodial Transfer Ledger (Chronological)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Seq #</th>
+                <th>Transfer Date/Time</th>
+                <th>Released By (Sender)</th>
+                <th>Received By (Recipient)</th>
+                <th>Purpose & Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="mono">00</td>
+                <td class="mono">{{ evidence.collected_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                <td>Scene / Source Endpoint</td>
+                <td>{{ evidence.collector.full_name }} ({{ evidence.collector.badge_number or 'DF' }})</td>
+                <td>Initial Acquisition & Cryptographic Baseline Hashing</td>
+            </tr>
+            {% for coc in evidence.custody_records %}
+            <tr>
+                <td class="mono">{{ loop.index }}</td>
+                <td class="mono">{{ coc.transfer_date.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                <td>{{ coc.sender.full_name }} ({{ coc.sender.badge_number or 'DF' }})</td>
+                <td>{{ coc.receiver.full_name }} ({{ coc.receiver.badge_number or 'DF' }})</td>
+                <td>
+                    <div>{{ coc.purpose }}</div>
+                    <small style="color: #64748b;">📍 {{ coc.location or 'Vault' }}</small>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Integrity Verification Audits</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Verification Date</th>
+                <th>Examiner</th>
+                <th>Calculated SHA-256 Digest</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ic in evidence.integrity_checks %}
+            <tr>
+                <td class="mono">{{ ic.checked_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                <td>{{ ic.checker.full_name }}</td>
+                <td class="mono" style="font-size: 0.72rem;">{{ ic.calculated_hash }}</td>
+                <td>
+                    <strong style="color: {% if ic.result == 'VERIFIED' %}#059669{% else %}#dc2626{% endif %};">
+                        {{ ic.result }}
+                    </strong>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align: center; color: #64748b;">No formal integrity checks recorded.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="signatures">
+        <div>
+            <div class="sig-line">
+                <strong>Certified Evidence Custodian Signature</strong><br>
+                {{ evidence.designated_custodian.full_name }} — Date: _________________
+            </div>
+        </div>
+        <div>
+            <div class="sig-line">
+                <strong>Forensic Laboratory Director / Witness</strong><br>
+                Chief Director Sarah Vance — Date: _________________
+            </div>
+        </div>
+    </div>
+</body>
+</html>

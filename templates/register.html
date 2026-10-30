@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Investigator Registration | Aegis Forensics Tracker{% endblock %}
+
+{% block auth_content %}
+<div class="auth-page">
+    <div class="auth-card" style="max-width: 500px;">
+        <div class="auth-header">
+            <div class="brand-icon" style="margin: 0 auto; width: 44px; height: 44px; font-size: 1.4rem;">⚡</div>
+            <h2>Register Forensic Officer</h2>
+            <p>Access Digital Forensics Evidence Management</p>
+        </div>
+
+        <div class="auth-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="form-group">
+                    <label class="form-label">Full Name & Title</label>
+                    <input type="text" name="full_name" class="form-control" required placeholder="Special Agent John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Official Agency Email</label>
+                    <input type="email" name="email" class="form-control" required placeholder="john.doe@forensics.local">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Badge / ID Number</label>
+                        <input type="text" name="badge_number" class="form-control" placeholder="DF-552">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Operational Role</label>
+                        <select name="role" class="form-control" required>
+                            <option value="Forensic Analyst">Forensic Analyst</option>
+                            <option value="Lead Investigator">Lead Investigator</option>
+                            <option value="Investigator">Investigator</option>
+                            <option value="Auditor">Auditor (Read-Only)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Department / Unit</label>
+                    <input type="text" name="department" class="form-control" placeholder="Cyber Incident Response Unit">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Secure Passphrase</label>
+                    <input type="password" name="password" minlength="8" class="form-control" required placeholder="Minimum 8 characters">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+                    Submit Registration
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--text-muted);">
+                Already registered? <a href="{{ url_for('login') }}" style="color: var(--cyber-blue); text-decoration: none;">Return to Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

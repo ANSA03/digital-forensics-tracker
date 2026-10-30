@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Forensic Tools Registry | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Validated Forensic Tools & Hardware Registry{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="max-width: 400px; width: 100%;">
+        <input type="text" data-table-search="tools-table" class="form-control" placeholder="Search tool name, vendor, or classification...">
+    </div>
+
+    <div>
+        <button class="btn btn-primary" data-modal-open="add-tool-modal">
+            <span>➕</span> Register Validated Tool
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">NIST CFTT & ISO/IEC 27037 Validated Forensic Equipment</h3>
+        <span class="chart-badge">SCIENTIFIC ADMISSIBILITY</span>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table" id="tools-table">
+            <thead>
+                <tr>
+                    <th>Tool ID</th>
+                    <th>Tool Name & Version</th>
+                    <th>Vendor / Developer</th>
+                    <th>Forensic Classification</th>
+                    <th>Validation Status</th>
+                    <th>Validation Date</th>
+                    <th>Operational Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tools %}
+                <tr>
+                    <td class="font-mono" style="color: var(--text-muted); font-size: 0.75rem;">
+                        #{{ t.tool_id }}
+                    </td>
+                    <td>
+                        <strong style="color: var(--text-primary);">{{ t.name }}</strong>
+                        <div class="font-mono" style="font-size: 0.72rem; color: var(--cyber-blue);">v{{ t.version }}</div>
+                    </td>
+                    <td>{{ t.vendor or 'Open Source Foundation' }}</td>
+                    <td>
+                        <span class="badge badge-custody" style="font-size: 0.68rem;">{{ t.tool_type }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if t.is_validated %}badge-verified{% else %}badge-medium{% endif %}">
+                            {{ 'CFTT Validated' if t.is_validated else 'Pending Lab Test' }}
+                        </span>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.75rem;">
+                        {{ t.validation_date.strftime('%Y-%m-%d') if t.validation_date else 'N/A' }}
+                    </td>
+                    <td style="font-size: 0.78rem; color: var(--text-secondary); max-width: 250px;">
+                        {{ t.notes or 'No operational notes recorded.' }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No forensic tools registered in inventory.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Tool Modal -->
+<div class="modal-overlay" id="add-tool-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Register Forensic Tool / Hardware Write-Blocker</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('create_tool') }}">
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Tool / Device Name</label>
+                        <input type="text" name="name" class="form-control" required placeholder="e.g. EnCase Forensic / Volatility">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Software / Firmware Version</label>
+                        <input type="text" name="version" class="form-control font-mono" required placeholder="e.g. 21.4.1">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Vendor / Author</label>
+                        <input type="text" name="vendor" class="form-control" placeholder="OpenText / Guidance Software">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tool Type</label>
+                        <select name="tool_type" class="form-control" required>
+                            <option value="Disk Imager">Disk Imager</option>
+                            <option value="Memory Analyzer">Memory Analyzer</option>
+                            <option value="Network Analyzer">Network Analyzer</option>
+                            <option value="Hardware Write Blocker">Hardware Write Blocker</option>
+                            <option value="File Carver">File Carver</option>
+                            <option value="Mobile Examiner">Mobile Examiner</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Laboratory Validation Notes</label>
+                    <textarea name="notes" class="form-control" rows="3" placeholder="Tested against NIST reference test images; confirmed hash consistency..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Tool Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

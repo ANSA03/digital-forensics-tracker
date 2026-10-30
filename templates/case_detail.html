@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}{{ case.case_number }} | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Investigation Dossier: {{ case.case_number }}{% endblock %}
+
+{% block content %}
+<!-- Dossier Overview Card -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div>
+            <span class="badge {% if case.priority == 'Critical' %}badge-critical{% elif case.priority == 'High' %}badge-high{% else %}badge-medium{% endif %}">
+                {{ case.priority }} Priority
+            </span>
+            <span class="badge {% if case.status == 'Open' %}badge-custody{% elif case.status == 'In Progress' %}badge-verified{% elif case.status == 'Closed' %}badge-collected{% else %}badge-medium{% endif %}" style="margin-left: 0.5rem;">
+                {{ case.status }}
+            </span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('edit_case', case_id=case.investigation_id) }}" class="btn btn-secondary btn-sm">
+                <span>✏️</span> Edit Dossier
+            </a>
+            <a href="{{ url_for('add_evidence', case_id=case.investigation_id) }}" class="btn btn-emerald btn-sm">
+                <span>➕</span> Attach Evidence
+            </a>
+            <a href="{{ url_for('api_case_summary', case_id=case.investigation_id) }}" target="_blank" class="btn btn-secondary btn-sm">
+                <span>📄</span> Export Summary JSON
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+            {{ case.title }}
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem;">
+            {{ case.description or 'No narrative scope entered for this investigation.' }}
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+            <div>
+                <span class="stat-title">Lead Investigator</span>
+                <div style="font-weight: 600; color: var(--text-primary); margin-top: 0.2rem;">
+                    {{ case.investigator.full_name }}
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">
+                    {{ case.investigator.department or 'Cyber Directorate' }} ({{ case.investigator.badge_number or 'No Badge' }})
+                </div>
+            </div>
+
+            <div>
+                <span class="stat-title">Opened On</span>
+                <div class="font-mono" style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.2rem;">
+                    {{ case.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                </div>
+            </div>
+
+            <div>
+                <span class="stat-title">Incident Date</span>
+                <div class="font-mono" style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.2rem;">
+                    {{ case.incident_date.strftime('%Y-%m-%d') if case.incident_date else 'Not Specified' }}
+                </div>
+            </div>
+
+            <div>
+                <span class="stat-title">Artifacts & Notes</span>
+                <div style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.2rem;">
+                    <strong>{{ case.evidence_items.count() }}</strong> Evidence Items | <strong>{{ case.notes.count() }}</strong> Notes
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evidence Items Attached to Case -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">Attached Forensic Evidence ({{ case.evidence_items.count() }})</h3>
+        <a href="{{ url_for('add_evidence', case_id=case.investigation_id) }}" class="btn btn-primary btn-sm">
+            <span>➕</span> Register New Evidence
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table">
+            <thead>
+                <tr>
+                    <th>Evidence #</th>
+                    <th>Name / Artifact</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>SHA-256 Hash</th>
+                    <th>Integrity Status</th>
+                    <th>Current Custodian</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in case.evidence_items %}
+                <tr>
+                    <td class="font-mono">
+                        <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" style="color: var(--cyber-blue); text-decoration: none; font-weight: 700;">
+                            {{ ev.evidence_number }}
+                        </a>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600;">{{ ev.evidence_name }}</div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">{{ ev.storage_location }}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-custody" style="font-size: 0.68rem;">{{ ev.evidence_type }}</span>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.75rem;">
+                        {{ ev.formatted_size }}
+                    </td>
+                    <td>
+                        {% if ev.sha256_hash %}
+                        <div class="hash-pill">
+                            <span>{{ ev.sha256_hash[:12] }}...{{ ev.sha256_hash[-8:] }}</span>
+                            <button class="copy-btn" data-hash="{{ ev.sha256_hash }}" title="Copy full SHA-256">📋</button>
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">No hash recorded</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if ev.status == 'Verified' %}badge-verified{% elif ev.status == 'Compromised' %}badge-compromised{% elif ev.status == 'In Custody' %}badge-custody{% else %}badge-collected{% endif %}">
+                            {{ ev.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {{ ev.designated_custodian.full_name }}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" class="btn btn-secondary btn-sm">
+                                Inspect
+                            </a>
+                            <form method="POST" action="{{ url_for('verify_evidence', evidence_id=ev.evidence_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-emerald btn-sm" title="Recompute SHA-256 and verify">
+                                    🛡️ Verify
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No digital evidence currently attached to this case. Click "Register New Evidence" above.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Case Notes and Findings Section -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Forensic Notes & Analyst Logs ({{ case.notes.count() }})</h3>
+        <button class="btn btn-secondary btn-sm" data-modal-open="add-note-modal">
+            <span>📝</span> Add Observation Note
+        </button>
+    </div>
+    <div class="card-body">
+        {% for note in case.notes %}
+        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="badge badge-custody" style="font-size: 0.68rem;">{{ note.note_type }}</span>
+                    <strong style="color: var(--text-primary); font-size: 0.95rem;">{{ note.title }}</strong>
+                    {% if note.is_confidential %}
+                    <span class="badge badge-critical" style="font-size: 0.65rem;">🔒 Confidential</span>
+                    {% endif %}
+                </div>
+                <div class="font-mono" style="font-size: 0.72rem; color: var(--text-muted);">
+                    {{ note.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                </div>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap;">{{ note.content }}</p>
+            <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid rgba(255, 255, 255, 0.04); padding-top: 0.5rem;">
+                Logged by: <strong style="color: var(--text-primary);">{{ note.author.full_name }}</strong> ({{ note.author.role }})
+            </div>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+            No forensic observations or case findings recorded yet.
+        </p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Note Modal -->
+<div class="modal-overlay" id="add-note-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Record Forensic Observation</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('add_case_note', case_id=case.investigation_id) }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Note Category</label>
+                    <select name="note_type" class="form-control" required>
+                        <option value="Initial Assessment">Initial Assessment</option>
+                        <option value="Forensic Observation" selected>Forensic Observation</option>
+                        <option value="Timeline Finding">Timeline Finding</option>
+                        <option value="Hypothesis & Lead">Hypothesis & Lead</option>
+                        <option value="Closing Summary">Closing Summary</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Note Title</label>
+                    <input type="text" name="title" class="form-control" required placeholder="e.g. Memory Dump Decryption Artifact">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Forensic Content / Evidence Findings</label>
+                    <textarea name="content" class="form-control" rows="5" required placeholder="Enter detailed findings, command outputs, or investigative deduction..."></textarea>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="is_confidential" id="confidential-check" value="1">
+                    <label for="confidential-check" style="color: var(--text-secondary); font-size: 0.85rem; cursor: pointer;">
+                        Restrict view to Lead Investigators & Administrators only (Confidential)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Forensic Note</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Register Evidence | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Digital Evidence Registration & Acquisition{% endblock %}
+
+{% block content %}
+<div style="max-width: 850px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Evidence Intake & Cryptographic Registration</h3>
+            <a href="{{ url_for('list_evidence') }}" class="btn btn-secondary btn-sm">Cancel</a>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Evidence Tag / ID Number</label>
+                        <input type="text" name="evidence_number" class="form-control font-mono" required
+                               value="{{ default_evidence_number }}" placeholder="EVD-2026-XXXX">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Associated Case Dossier</label>
+                        <select name="investigation_id" class="form-control" required>
+                            {% for c in investigations %}
+                                <option value="{{ c.investigation_id }}" {% if selected_case_id and selected_case_id == c.investigation_id %}selected{% endif %}>
+                                    {{ c.case_number }} - {{ c.title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Evidence Artifact Name</label>
+                    <input type="text" name="evidence_name" class="form-control" required
+                           placeholder="e.g. Domain Controller RAM Dump - DC01_winpmem.raw">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Forensic Classification</label>
+                        <select name="evidence_type" class="form-control" required>
+                            <option value="Disk Image">Disk Image (Bit-stream raw dd / E01 / vmdk)</option>
+                            <option value="Memory Dump">Memory Dump (RAM / pagefile / crash dump)</option>
+                            <option value="Network PCAP">Network PCAP (Wireshark packet capture)</option>
+                            <option value="Mobile Extraction">Mobile Extraction (Cellebrite / GrayKey dump)</option>
+                            <option value="System Log">System Log (Event viewer / syslog / auditd)</option>
+                            <option value="Document">Document / Email (Spreadsheet, PDF, PST)</option>
+                            <option value="Removable Media">Removable Media (USB thumb drive / SD card)</option>
+                            <option value="Cloud Artifact">Cloud Artifact (S3 / GCS bucket snapshot / IAM log)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Physical / Vault Storage Location</label>
+                        <input type="text" name="storage_location" class="form-control"
+                               value="Secure Forensic Vault - Locker A-1" required>
+                    </div>
+                </div>
+
+                <!-- File Upload Dropzone -->
+                <div class="form-group">
+                    <label class="form-label">Digital Evidence File (Auto SHA-256 Hashing)</label>
+                    <div class="file-dropzone" id="evidence-dropzone">
+                        <div class="dropzone-icon">📥</div>
+                        <div class="dropzone-text">Click or drag & drop forensic file artifact</div>
+                        <div class="dropzone-subtext" id="file-selected-label">
+                            Supported: raw, dd, img, bin, pcap, log, zip, memory dumps, virtual disks (up to 250 MB)
+                        </div>
+                        <input type="file" name="evidence_file" id="evidence-file-input">
+                    </div>
+                </div>
+
+                <!-- External Hash Entry (Optional) -->
+                <div class="form-group">
+                    <label class="form-label">Pre-computed SHA-256 Hash (Optional for external SAN storage)</label>
+                    <input type="text" name="manual_hash" class="form-control font-mono" maxlength="64"
+                           placeholder="Leave blank to compute automatically from uploaded file above...">
+                    <small style="color: var(--text-muted); font-size: 0.72rem;">
+                        If a file is uploaded, its SHA-256 is automatically computed during streaming intake.
+                    </small>
+                </div>
+
+                <!-- Forensic Tags -->
+                <div class="form-group">
+                    <label class="form-label">Forensic Classification Tags</label>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem;">
+                        {% for tag in tags %}
+                        <label style="display: inline-flex; align-items: center; gap: 0.35rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 0.3rem 0.65rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="tag_ids" value="{{ tag.tag_id }}">
+                            <span style="color: {{ tag.color_code }}; font-weight: 600;">●</span>
+                            <span>{{ tag.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Acquisition Notes & Chain of Custody Context</label>
+                    <textarea name="description" class="form-control" rows="3" placeholder="Describe acquisition method, hardware write blocker used, serial numbers, witness signatures..."></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                    <a href="{{ url_for('list_evidence') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <span>🛡️</span> Compute Hash & Register Evidence
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

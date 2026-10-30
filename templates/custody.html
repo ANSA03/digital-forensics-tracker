@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Chain of Custody Hub | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Transactional Chain of Custody Hub{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; gap: 1rem; align-items: center; flex-grow: 1; max-width: 600px;">
+        <input type="text" data-table-search="custody-table" class="form-control" placeholder="Search by evidence #, case #, sender, recipient, or location...">
+    </div>
+
+    <div>
+        <button class="btn btn-primary" data-modal-open="new-transfer-modal">
+            <span>🔗</span> Record Custody Transfer
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Chronological Chain of Custody Ledger (PostgreSQL Transaction Guaranteed)</h3>
+        <span class="chart-badge">LEGAL INTEGRITY STANDARD</span>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table" id="custody-table">
+            <thead>
+                <tr>
+                    <th>Transfer ID</th>
+                    <th>Evidence Item</th>
+                    <th>Case Dossier</th>
+                    <th>Transferred From (Sender)</th>
+                    <th>Transferred To (Recipient)</th>
+                    <th>Transfer Timestamp</th>
+                    <th>Purpose & Location</th>
+                    <th>Manifest</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in custody_records %}
+                <tr>
+                    <td class="font-mono" style="color: var(--text-muted); font-size: 0.78rem;">
+                        #{{ record.custody_id }}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('view_evidence', evidence_id=record.evidence.evidence_id) }}" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;" class="font-mono">
+                            {{ record.evidence.evidence_number }}
+                        </a>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ record.evidence.evidence_name }}
+                        </div>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.75rem;">
+                        <a href="{{ url_for('view_case', case_id=record.evidence.investigation.investigation_id) }}" style="color: var(--text-secondary); text-decoration: none;">
+                            {{ record.evidence.investigation.case_number }}
+                        </a>
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">{{ record.sender.full_name }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">{{ record.sender.badge_number or 'No Badge' }}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; color: var(--cyber-blue);">{{ record.receiver.full_name }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">{{ record.receiver.badge_number or 'No Badge' }}</div>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.75rem; white-space: nowrap;">
+                        {{ record.transfer_date.strftime('%Y-%m-%d %H:%M UTC') }}
+                    </td>
+                    <td>
+                        <div style="font-size: 0.8rem;">{{ record.purpose }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">📍 {{ record.location or 'Vault' }}</div>
+                        {% if record.authorization_notes %}
+                        <div style="font-size: 0.68rem; color: var(--warning-amber);">📜 {{ record.authorization_notes }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('custody_report', evidence_id=record.evidence_id) }}" target="_blank" class="btn btn-secondary btn-sm" title="Printable Court Manifest">
+                            📄 Print
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No custody transfers recorded yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- New Custody Transfer Modal -->
+<div class="modal-overlay" id="new-transfer-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Initiate Custody Transfer Transaction</h3>
+            <button class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('transfer_custody') }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Select Evidence Item</label>
+                    <select name="evidence_id" class="form-control" required id="transfer-evidence-select">
+                        {% for ev in all_evidence %}
+                        <option value="{{ ev.evidence_id }}" data-custodian="{{ ev.designated_custodian.user_id }}">
+                            {{ ev.evidence_number }} - {{ ev.evidence_name }} (Current Custodian: {{ ev.designated_custodian.full_name }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Transfer From (Current Custodian)</label>
+                        <select name="transferred_from" class="form-control" required>
+                            {% for u in users %}
+                            <option value="{{ u.user_id }}" {% if u.user_id == session.get('user_id') %}selected{% endif %}>
+                                {{ u.full_name }} ({{ u.role }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Transfer To (Recipient)</label>
+                        <select name="transferred_to" class="form-control" required>
+                            {% for u in users %}
+                            <option value="{{ u.user_id }}">
+                                {{ u.full_name }} ({{ u.role }} - {{ u.badge_number or 'No Badge' }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Legal Reason & Operational Purpose</label>
+                    <textarea name="purpose" class="form-control" rows="2" required placeholder="e.g. Relocating for courtroom exhibit presentation"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Destination Facility / Vault Location</label>
+                    <input type="text" name="location" class="form-control" required value="Courtroom 4B Exhibit Table">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Authorization / Legal Instrument Reference</label>
+                    <input type="text" name="authorization_notes" class="form-control" placeholder="Trial Subpoena #CR-2026-880">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <span>🔗</span> Execute Atomic PostgreSQL Transfer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

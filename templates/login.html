@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication | Aegis Forensics Tracker{% endblock %}
+
+{% block auth_content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="brand-icon" style="margin: 0 auto; width: 44px; height: 44px; font-size: 1.4rem;">⚡</div>
+            <h2>Aegis Forensics Tracker</h2>
+            <p>Digital Forensics Evidence & Custody Management</p>
+        </div>
+
+        <div class="auth-body">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Official Email</label>
+                    <input type="email" id="login-email" name="email" class="form-control" required placeholder="analyst@forensics.local" autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" class="form-control" required placeholder="••••••••••••">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+                    Authenticate Session
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--text-muted);">
+                Need an investigator account? <a href="{{ url_for('register') }}" style="color: var(--cyber-blue); text-decoration: none;">Register here</a>
+            </div>
+
+            <!-- Demo Credentials Helper Pill -->
+            <div class="demo-credentials">
+                <div class="demo-title">⚡ Quick Demo Credentials</div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem; color: var(--text-secondary);">
+                    <div>
+                        <a href="javascript:void(0)" onclick="fillLogin('admin@forensics.local', 'AdminSecure123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
+                            Director (Admin):
+                        </a>
+                        <code>admin@forensics.local</code> / <code>AdminSecure123!</code>
+                    </div>
+                    <div>
+                        <a href="javascript:void(0)" onclick="fillLogin('alex.cross@forensics.local', 'Investigator123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
+                            Special Agent (Lead):
+                        </a>
+                        <code>alex.cross@forensics.local</code> / <code>Investigator123!</code>
+                    </div>
+                    <div>
+                        <a href="javascript:void(0)" onclick="fillLogin('elena.rostova@forensics.local', 'Analyst123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
+                            Senior Analyst:
+                        </a>
+                        <code>elena.rostova@forensics.local</code> / <code>Analyst123!</code>
+                    </div>
+                    <div>
+                        <a href="javascript:void(0)" onclick="fillLogin('marcus.sterling@forensics.local', 'Auditor123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
+                            Inspector (Auditor):
+                        </a>
+                        <code>marcus.sterling@forensics.local</code> / <code>Auditor123!</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

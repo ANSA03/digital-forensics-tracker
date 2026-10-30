@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}User Management | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Investigator & Personnel Access Control{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Registered Forensic Personnel & Role-Based Access Control (RBAC)</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Officer Name</th>
+                    <th>Official Email</th>
+                    <th>Badge #</th>
+                    <th>Department</th>
+                    <th>Assigned Role</th>
+                    <th>Status</th>
+                    <th>Change Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="font-mono" style="color: var(--text-muted); font-size: 0.75rem;">
+                        #{{ u.user_id }}
+                    </td>
+                    <td>
+                        <strong style="color: var(--text-primary);">{{ u.full_name }}</strong>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.78rem;">{{ u.email }}</td>
+                    <td class="font-mono" style="font-size: 0.78rem; color: var(--cyber-blue);">
+                        {{ u.badge_number or 'No Badge' }}
+                    </td>
+                    <td>{{ u.department or 'Cyber Operations' }}</td>
+                    <td>
+                        <span class="badge {% if u.role == 'Admin' %}badge-critical{% elif u.role == 'Lead Investigator' %}badge-high{% elif u.role == 'Forensic Analyst' %}badge-verified{% else %}badge-custody{% endif %}">
+                            {{ u.role }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if u.is_active %}badge-verified{% else %}badge-collected{% endif %}">
+                            {{ 'Active' if u.is_active else 'Suspended' }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if u.user_id != session.get('user_id') %}
+                        <form method="POST" action="{{ url_for('update_user_role', user_id=u.user_id) }}" style="display: flex; gap: 0.35rem; align-items: center;">
+                            <select name="role" class="form-control" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; width: 140px;">
+                                <option value="Admin" {% if u.role == 'Admin' %}selected{% endif %}>Admin</option>
+                                <option value="Lead Investigator" {% if u.role == 'Lead Investigator' %}selected{% endif %}>Lead Investigator</option>
+                                <option value="Forensic Analyst" {% if u.role == 'Forensic Analyst' %}selected{% endif %}>Forensic Analyst</option>
+                                <option value="Investigator" {% if u.role == 'Investigator' %}selected{% endif %}>Investigator</option>
+                                <option value="Auditor" {% if u.role == 'Auditor' %}selected{% endif %}>Auditor</option>
+                            </select>
+                            <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+                        </form>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.72rem;">Current User</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Evidence Registry | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}Digital Evidence Master Registry{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <!-- Search Bar -->
+    <div style="display: flex; gap: 1rem; align-items: center; flex-grow: 1; max-width: 600px;">
+        <input type="text" data-table-search="evidence-table" class="form-control" placeholder="Search by evidence #, artifact name, hash, case #, or custodian...">
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ url_for('list_evidence', filter='compromised') }}" class="btn btn-danger btn-sm">
+            🚨 Filter Compromised
+        </a>
+        <a href="{{ url_for('list_evidence', filter='verified') }}" class="btn btn-emerald btn-sm">
+            🛡️ Filter Verified
+        </a>
+        <a href="{{ url_for('list_evidence') }}" class="btn btn-secondary btn-sm">
+            Show All
+        </a>
+        <a href="{{ url_for('add_evidence') }}" class="btn btn-primary">
+            <span>➕</span> Register New Evidence
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="forensic-table" id="evidence-table">
+            <thead>
+                <tr>
+                    <th>Evidence #</th>
+                    <th>Artifact Name</th>
+                    <th>Case Dossier</th>
+                    <th>Classification</th>
+                    <th>File Size</th>
+                    <th>SHA-256 Digest</th>
+                    <th>Integrity Status</th>
+                    <th>Current Custodian</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in evidence_items %}
+                <tr>
+                    <td class="font-mono">
+                        <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" style="color: var(--cyber-blue); text-decoration: none; font-weight: 700;">
+                            {{ ev.evidence_number }}
+                        </a>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600;">{{ ev.evidence_name }}</div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">
+                            Location: {{ ev.storage_location }}
+                        </div>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.78rem;">
+                        <a href="{{ url_for('view_case', case_id=ev.investigation.investigation_id) }}" style="color: var(--text-secondary); text-decoration: none;">
+                            {{ ev.investigation.case_number }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge badge-custody" style="font-size: 0.68rem;">{{ ev.evidence_type }}</span>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.75rem;">
+                        {{ ev.formatted_size }}
+                    </td>
+                    <td>
+                        {% if ev.sha256_hash %}
+                        <div class="hash-pill">
+                            <span>{{ ev.sha256_hash[:10] }}...{{ ev.sha256_hash[-8:] }}</span>
+                            <button class="copy-btn" data-hash="{{ ev.sha256_hash }}" title="Copy full SHA-256">📋</button>
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">None</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if ev.status == 'Verified' %}badge-verified{% elif ev.status == 'Compromised' %}badge-compromised{% elif ev.status == 'In Custody' %}badge-custody{% else %}badge-collected{% endif %}">
+                            {{ ev.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">{{ ev.designated_custodian.full_name }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">{{ ev.designated_custodian.badge_number or 'No Badge' }}</div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" class="btn btn-secondary btn-sm">
+                                Details
+                            </a>
+                            <form method="POST" action="{{ url_for('verify_evidence', evidence_id=ev.evidence_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-emerald btn-sm" title="Recompute and verify hash">
+                                    🛡️
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No digital evidence records match the current filter.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Digital Forensics Evidence Tracker{% endblock %}</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% if session.get('user_id') %}
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-icon">⚡</div>
+                <div class="brand-text">
+                    <h1>Aegis Forensics</h1>
+                    <p>Evidence & Custody v2.4</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Core Operations</div>
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="{{ url_for('list_cases') }}" class="nav-link {% if request.endpoint in ['list_cases', 'view_case', 'create_case', 'edit_case'] %}active{% endif %}">
+                    <span>📁</span> Investigations
+                </a>
+                <a href="{{ url_for('list_evidence') }}" class="nav-link {% if request.endpoint in ['list_evidence', 'view_evidence', 'add_evidence'] %}active{% endif %}">
+                    <span>💾</span> Digital Evidence
+                </a>
+                <a href="{{ url_for('custody_hub') }}" class="nav-link {% if request.endpoint in ['custody_hub', 'custody_report'] %}active{% endif %}">
+                    <span>🔗</span> Chain of Custody
+                </a>
+
+                <div class="nav-section-title">Forensic Rigor</div>
+                <a href="{{ url_for('tools_registry') }}" class="nav-link {% if request.endpoint == 'tools_registry' %}active{% endif %}">
+                    <span>🛠️</span> Forensic Tools
+                </a>
+                <a href="{{ url_for('dispositions_hub') }}" class="nav-link {% if request.endpoint == 'dispositions_hub' %}active{% endif %}">
+                    <span>⚖️</span> Dispositions & Court
+                </a>
+                <a href="{{ url_for('audit_logs') }}" class="nav-link {% if request.endpoint == 'audit_logs' %}active{% endif %}">
+                    <span>📜</span> Trigger Audit Logs
+                </a>
+
+                {% if session.get('role') == 'Admin' %}
+                <div class="nav-section-title">Administration</div>
+                <a href="{{ url_for('users_management') }}" class="nav-link {% if request.endpoint == 'users_management' %}active{% endif %}">
+                    <span>👥</span> User & Roles
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-badge">
+                    <div class="user-avatar">
+                        {{ session.get('user_name', 'U')[0] }}
+                    </div>
+                    <div class="user-meta">
+                        <h4>{{ session.get('user_name') }}</h4>
+                        <span>{{ session.get('role') }}</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h2 class="page-title">
+                        {% block header_title %}Forensic Command{% endblock %}
+                    </h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span>POSTGRESQL 17 VERIFIED</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">
+                        <span>🚪</span> Logout
+                    </a>
+                </div>
+            </header>
+
+            <!-- Main Page Content Body -->
+            <main class="content-body">
+                <!-- Flashed Messages -->
+                <div class="alert-container">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                                    <span>{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% else %}
+        <!-- Unauthenticated View (Login/Register) -->
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+
+    <!-- Modals block -->
+    {% block modals %}{% endblock %}
+
+    <!-- Global Client Script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Trigger Audit Logs | Aegis Forensics Tracker{% endblock %}
+{% block header_title %}PostgreSQL Trigger-Generated Audit Trail{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <!-- Filter by Table -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Filter Table:</span>
+        <a href="{{ url_for('audit_logs') }}" class="btn btn-secondary btn-sm {% if not selected_table %}active{% endif %}">All</a>
+        <a href="{{ url_for('audit_logs', table='evidence') }}" class="btn btn-secondary btn-sm {% if selected_table == 'evidence' %}active{% endif %}">Evidence</a>
+        <a href="{{ url_for('audit_logs', table='investigations') }}" class="btn btn-secondary btn-sm {% if selected_table == 'investigations' %}active{% endif %}">Investigations</a>
+        <a href="{{ url_for('audit_logs', table='chain_of_custody') }}" class="btn btn-secondary btn-sm {% if selected_table == 'chain_of_custody' %}active{% endif %}">Custody</a>
+        <a href="{{ url_for('audit_logs', table='integrity_checks') }}" class="btn btn-secondary btn-sm {% if selected_table == 'integrity_checks' %}active{% endif %}">Integrity</a>
+        <a href="{{ url_for('audit_logs', table='case_notes') }}" class="btn btn-secondary btn-sm {% if selected_table == 'case_notes' %}active{% endif %}">Case Notes</a>
+    </div>
+
+    <!-- Search -->
+    <div style="max-width: 320px; width: 100%;">
+        <input type="text" data-table-search="audit-table" class="form-control" placeholder="Search actions, records, or details...">
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Immutable Audit Trail (Total Events: {{ logs|length }})</h3>
+        <span class="chart-badge">PL/PGSQL TRIGGER CAPTURED</span>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table" id="audit-table">
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Timestamp (UTC)</th>
+                    <th>Action</th>
+                    <th>Target Table</th>
+                    <th>Record ID</th>
+                    <th>Actor / User</th>
+                    <th>Captured Payload / State Diff</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">
+                        #{{ log.log_id }}
+                    </td>
+                    <td class="font-mono" style="font-size: 0.75rem; white-space: nowrap;">
+                        {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </td>
+                    <td>
+                        <span class="badge {% if log.action == 'INSERT' %}badge-verified{% elif log.action == 'UPDATE' %}badge-medium{% elif log.action == 'DELETE' %}badge-critical{% else %}badge-custody{% endif %}">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.8rem; color: var(--cyber-blue);">
+                        {{ log.table_name }}
+                    </td>
+                    <td class="font-mono" style="font-size: 0.8rem;">
+                        #{{ log.record_id or '—' }}
+                    </td>
+                    <td>
+                        {% if log.user %}
+                            <div style="font-weight: 500;">{{ log.user.full_name }}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{{ log.user.role }} (ID: {{ log.user_id }})</div>
+                        {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">System / DB Trigger</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <pre style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary); background: var(--bg-input); padding: 0.4rem 0.6rem; border-radius: 4px; max-width: 400px; max-height: 80px; overflow: auto; white-space: pre-wrap; word-break: break-all;">{{ log.details or '{}' }}</pre>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No audit events recorded for this table.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
