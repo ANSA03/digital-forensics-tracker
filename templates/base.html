@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Digital Forensics Evidence Tracker{% endblock %}</title>
+    <title>{% block title %}TracePoint – Digital Forensic Evidence & Chain-of-Custody Management System{% endblock %}</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- Stylesheet -->
@@ -20,43 +20,50 @@
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="brand-icon">⚡</div>
+                <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 7V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V9C21 7.89543 20.1046 7 19 7H11L9 5H5C3.89543 5 3 5.89543 3 7Z" fill="#2B3A4F" stroke="#7A8CA3" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8.5 13.5L11 16L15.5 11" stroke="#39805B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
                 <div class="brand-text">
-                    <h1>Aegis Forensics</h1>
-                    <p>Evidence & Custody v2.4</p>
+                    <h1>TracePoint</h1>
+                    <p>Evidence & Custody System</p>
                 </div>
             </div>
 
             <nav class="sidebar-nav">
-                <div class="nav-section-title">Core Operations</div>
+                <div class="nav-section-title">Operations</div>
                 <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <span>📊</span> Dashboard
                 </a>
                 <a href="{{ url_for('list_cases') }}" class="nav-link {% if request.endpoint in ['list_cases', 'view_case', 'create_case', 'edit_case'] %}active{% endif %}">
-                    <span>📁</span> Investigations
+                    <span>📁</span> Cases
                 </a>
-                <a href="{{ url_for('list_evidence') }}" class="nav-link {% if request.endpoint in ['list_evidence', 'view_evidence', 'add_evidence'] %}active{% endif %}">
-                    <span>💾</span> Digital Evidence
+                <a href="{{ url_for('list_evidence') }}" class="nav-link {% if request.endpoint in ['list_evidence', 'view_evidence', 'add_evidence'] and request.args.get('filter') != 'verified' %}active{% endif %}">
+                    <span>💾</span> Evidence Register
                 </a>
                 <a href="{{ url_for('custody_hub') }}" class="nav-link {% if request.endpoint in ['custody_hub', 'custody_report'] %}active{% endif %}">
                     <span>🔗</span> Chain of Custody
                 </a>
+                <a href="{{ url_for('list_evidence', filter='verified') }}" class="nav-link {% if request.args.get('filter') == 'verified' %}active{% endif %}">
+                    <span>🛡️</span> Integrity Verification
+                </a>
 
-                <div class="nav-section-title">Forensic Rigor</div>
+                <div class="nav-section-title">Administration</div>
                 <a href="{{ url_for('tools_registry') }}" class="nav-link {% if request.endpoint == 'tools_registry' %}active{% endif %}">
                     <span>🛠️</span> Forensic Tools
                 </a>
                 <a href="{{ url_for('dispositions_hub') }}" class="nav-link {% if request.endpoint == 'dispositions_hub' %}active{% endif %}">
-                    <span>⚖️</span> Dispositions & Court
+                    <span>⚖️</span> Dispositions
                 </a>
                 <a href="{{ url_for('audit_logs') }}" class="nav-link {% if request.endpoint == 'audit_logs' %}active{% endif %}">
-                    <span>📜</span> Trigger Audit Logs
+                    <span>📜</span> Audit Log
                 </a>
 
                 {% if session.get('role') == 'Admin' %}
-                <div class="nav-section-title">Administration</div>
                 <a href="{{ url_for('users_management') }}" class="nav-link {% if request.endpoint == 'users_management' %}active{% endif %}">
-                    <span>👥</span> User & Roles
+                    <span>👥</span> Investigators
                 </a>
                 {% endif %}
             </nav>
@@ -79,17 +86,19 @@
             <!-- Topbar -->
             <header class="topbar">
                 <div class="topbar-left">
-                    <h2 class="page-title">
-                        {% block header_title %}Forensic Command{% endblock %}
-                    </h2>
+                    <div class="breadcrumbs">
+                        <a href="{{ url_for('dashboard') }}">TracePoint</a>
+                        <span class="breadcrumbs-separator">/</span>
+                        <span>{% block breadcrumb %}Overview{% endblock %}</span>
+                    </div>
                 </div>
                 <div class="topbar-right">
                     <div class="status-indicator">
                         <span class="status-dot"></span>
-                        <span>POSTGRESQL 17 VERIFIED</span>
+                        <span>PostgreSQL Connected</span>
                     </div>
                     <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">
-                        <span>🚪</span> Logout
+                        Sign Out
                     </a>
                 </div>
             </header>

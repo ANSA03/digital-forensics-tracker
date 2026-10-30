@@ -1,5 +1,5 @@
 /* ==============================================================================
-   Digital Forensics Evidence Tracker - Client Logic & Interactive Charts
+   TracePoint – Client Logic & Compact Chart Visualizations
    ============================================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 navigator.clipboard.writeText(hashText).then(() => {
                     const originalHtml = btn.innerHTML;
                     btn.innerHTML = "✓ Copied";
-                    btn.style.color = "#10b981";
+                    btn.style.color = "#39805B";
                     setTimeout(() => {
                         btn.innerHTML = originalHtml;
                         btn.style.color = "";
@@ -96,7 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const sizeMb = (f.size / (1024 * 1024)).toFixed(2);
                 if (fileSelectedLabel) {
                     fileSelectedLabel.textContent = `Selected: ${f.name} (${sizeMb} MB)`;
-                    fileSelectedLabel.style.color = "#38bdf8";
+                    fileSelectedLabel.style.color = "#416A91";
+                    fileSelectedLabel.style.fontWeight = "600";
                 }
             }
         }
@@ -116,7 +117,7 @@ function fillLogin(email, password) {
     }
 }
 
-// Chart.js Theme Defaults for Dark Forensics UI
+// Chart.js Theme Defaults for TracePoint Institutional Light UI
 function initDashboardCharts() {
     const evidenceTypeCanvas = document.getElementById("chart-evidence-types");
     const casesCanvas = document.getElementById("chart-cases-status");
@@ -124,7 +125,7 @@ function initDashboardCharts() {
     const timelineCanvas = document.getElementById("chart-custody-timeline");
 
     if (!evidenceTypeCanvas && !casesCanvas && !integrityCanvas && !timelineCanvas) {
-        return; // Not on dashboard page
+        return;
     }
 
     // Fetch dashboard stats from API endpoint
@@ -151,11 +152,11 @@ function renderEvidenceTypeChart(canvas, typeData) {
             datasets: [{
                 data: counts.length ? counts : [1],
                 backgroundColor: [
-                    '#38bdf8', '#10b981', '#f59e0b', '#a855f7',
-                    '#f43f5e', '#06b6d4', '#ec4899', '#64748b'
+                    '#416A91', '#39805B', '#C28B36', '#6C5B7B',
+                    '#457B9D', '#8EA4BE', '#D97706', '#94A3B8'
                 ],
                 borderWidth: 2,
-                borderColor: '#151e32'
+                borderColor: '#FFFFFF'
             }]
         },
         options: {
@@ -164,10 +165,10 @@ function renderEvidenceTypeChart(canvas, typeData) {
             plugins: {
                 legend: {
                     position: 'right',
-                    labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' } }
+                    labels: { color: '#5A6578', boxWidth: 12, font: { size: 11, family: 'Inter' } }
                 }
             },
-            cutout: '68%'
+            cutout: '65%'
         }
     });
 }
@@ -182,10 +183,11 @@ function renderCasesChart(canvas, casesData) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Investigations',
+                label: 'Cases',
                 data: counts,
-                backgroundColor: '#38bdf8',
-                borderRadius: 4
+                backgroundColor: '#416A91',
+                borderRadius: 4,
+                maxBarThickness: 36
             }]
         },
         options: {
@@ -193,12 +195,12 @@ function renderCasesChart(canvas, casesData) {
             maintainAspectRatio: false,
             scales: {
                 x: {
-                    ticks: { color: '#94a3b8' },
-                    grid: { color: 'rgba(255, 255, 255, 0.04)' }
+                    ticks: { color: '#5A6578', font: { size: 11 } },
+                    grid: { display: false }
                 },
                 y: {
-                    ticks: { color: '#94a3b8', stepSize: 1 },
-                    grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                    ticks: { color: '#5A6578', stepSize: 1, font: { size: 11 } },
+                    grid: { color: '#ECEFF2' },
                     beginAtZero: true
                 }
             },
@@ -213,18 +215,18 @@ function renderIntegrityChart(canvas, integrityData) {
     if (!canvas || !integrityData) return;
 
     new Chart(canvas, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
-            labels: ['Verified Authentic', 'Compromised / Tampered', 'Pending Initial Check'],
+            labels: ['Verified', 'Mismatch', 'Pending Verification'],
             datasets: [{
                 data: [
                     integrityData.verified || 0,
                     integrityData.compromised || 0,
                     integrityData.pending || 0
                 ],
-                backgroundColor: ['#10b981', '#f43f5e', '#64748b'],
+                backgroundColor: ['#39805B', '#B84B4B', '#BAC5D5'],
                 borderWidth: 2,
-                borderColor: '#151e32'
+                borderColor: '#FFFFFF'
             }]
         },
         options: {
@@ -233,9 +235,10 @@ function renderIntegrityChart(canvas, integrityData) {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { color: '#94a3b8', font: { size: 11 } }
+                    labels: { color: '#5A6578', boxWidth: 12, font: { size: 11 } }
                 }
-            }
+            },
+            cutout: '65%'
         }
     });
 }
@@ -252,13 +255,13 @@ function renderCustodyTimelineChart(canvas, timelineData) {
             datasets: [{
                 label: 'Custody Transfers',
                 data: counts,
-                borderColor: '#a855f7',
-                backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                borderColor: '#416A91',
+                backgroundColor: 'rgba(65, 106, 145, 0.08)',
                 borderWidth: 2,
                 fill: true,
-                tension: 0.35,
-                pointBackgroundColor: '#a855f7',
-                pointRadius: 4
+                tension: 0.25,
+                pointBackgroundColor: '#416A91',
+                pointRadius: 3
             }]
         },
         options: {
@@ -266,12 +269,12 @@ function renderCustodyTimelineChart(canvas, timelineData) {
             maintainAspectRatio: false,
             scales: {
                 x: {
-                    ticks: { color: '#94a3b8' },
-                    grid: { color: 'rgba(255, 255, 255, 0.04)' }
+                    ticks: { color: '#5A6578', font: { size: 10 } },
+                    grid: { display: false }
                 },
                 y: {
-                    ticks: { color: '#94a3b8', stepSize: 1 },
-                    grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                    ticks: { color: '#5A6578', stepSize: 1, font: { size: 10 } },
+                    grid: { color: '#ECEFF2' },
                     beginAtZero: true
                 }
             },

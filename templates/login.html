@@ -1,18 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Authentication | Aegis Forensics Tracker{% endblock %}
+{% block title %}Sign In | TracePoint{% endblock %}
 
 {% block auth_content %}
 <div class="auth-page">
     <div class="auth-card">
         <div class="auth-header">
-            <div class="brand-icon" style="margin: 0 auto; width: 44px; height: 44px; font-size: 1.4rem;">⚡</div>
-            <h2>Aegis Forensics Tracker</h2>
-            <p>Digital Forensics Evidence & Custody Management</p>
+            <div style="display: flex; justify-content: center; margin-bottom: 0.5rem;">
+                <div class="brand-icon" style="width: 44px; height: 44px; background: #243247; border-color: #3B4D66;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 7V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V9C21 7.89543 20.1046 7 19 7H11L9 5H5C3.89543 5 3 5.89543 3 7Z" fill="#1C2737" stroke="#8EA4BE" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8.5 13.5L11 16L15.5 11" stroke="#39805B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+            <h2>TracePoint</h2>
+            <p>Digital Forensic Evidence & Chain-of-Custody Management System</p>
         </div>
 
         <div class="auth-body">
-            <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -25,8 +31,8 @@
 
             <form method="POST" action="{{ url_for('login') }}">
                 <div class="form-group">
-                    <label class="form-label" for="login-email">Official Email</label>
-                    <input type="email" id="login-email" name="email" class="form-control" required placeholder="analyst@forensics.local" autofocus>
+                    <label class="form-label" for="login-email">Email Address</label>
+                    <input type="email" id="login-email" name="email" class="form-control" required placeholder="name@forensics.local" autofocus>
                 </div>
 
                 <div class="form-group">
@@ -35,41 +41,41 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
-                    Authenticate Session
+                    Sign In
                 </button>
             </form>
 
-            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--text-muted);">
-                Need an investigator account? <a href="{{ url_for('register') }}" style="color: var(--cyber-blue); text-decoration: none;">Register here</a>
+            <div style="text-align: center; margin-top: 1.15rem; font-size: 0.8rem; color: var(--text-secondary);">
+                Need an account? <a href="{{ url_for('register') }}" style="color: var(--primary); text-decoration: none; font-weight: 500;">Register here</a>
             </div>
 
-            <!-- Demo Credentials Helper Pill -->
+            <!-- Demo Credentials Helper -->
             <div class="demo-credentials">
-                <div class="demo-title">⚡ Quick Demo Credentials</div>
-                <div style="display: flex; flex-direction: column; gap: 0.4rem; color: var(--text-secondary);">
+                <div class="demo-title">Demo User Accounts</div>
+                <div style="display: flex; flex-direction: column; gap: 0.35rem; color: var(--text-secondary);">
                     <div>
-                        <a href="javascript:void(0)" onclick="fillLogin('admin@forensics.local', 'AdminSecure123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
-                            Director (Admin):
+                        <a href="javascript:void(0)" onclick="fillLogin('admin@forensics.local', 'AdminSecure123!')" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            Admin:
                         </a>
-                        <code>admin@forensics.local</code> / <code>AdminSecure123!</code>
+                        <code class="font-mono">admin@forensics.local</code> / <code>AdminSecure123!</code>
                     </div>
                     <div>
-                        <a href="javascript:void(0)" onclick="fillLogin('alex.cross@forensics.local', 'Investigator123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
-                            Special Agent (Lead):
+                        <a href="javascript:void(0)" onclick="fillLogin('alex.cross@forensics.local', 'Investigator123!')" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            Lead Investigator:
                         </a>
-                        <code>alex.cross@forensics.local</code> / <code>Investigator123!</code>
+                        <code class="font-mono">alex.cross@forensics.local</code> / <code>Investigator123!</code>
                     </div>
                     <div>
-                        <a href="javascript:void(0)" onclick="fillLogin('elena.rostova@forensics.local', 'Analyst123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
-                            Senior Analyst:
+                        <a href="javascript:void(0)" onclick="fillLogin('elena.rostova@forensics.local', 'Analyst123!')" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            Forensic Analyst:
                         </a>
-                        <code>elena.rostova@forensics.local</code> / <code>Analyst123!</code>
+                        <code class="font-mono">elena.rostova@forensics.local</code> / <code>Analyst123!</code>
                     </div>
                     <div>
-                        <a href="javascript:void(0)" onclick="fillLogin('marcus.sterling@forensics.local', 'Auditor123!')" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
-                            Inspector (Auditor):
+                        <a href="javascript:void(0)" onclick="fillLogin('marcus.sterling@forensics.local', 'Auditor123!')" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            Auditor:
                         </a>
-                        <code>marcus.sterling@forensics.local</code> / <code>Auditor123!</code>
+                        <code class="font-mono">marcus.sterling@forensics.local</code> / <code>Auditor123!</code>
                     </div>
                 </div>
             </div>

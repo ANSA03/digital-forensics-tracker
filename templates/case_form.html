@@ -1,46 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}{{ 'Edit Investigation' if case else 'New Investigation' }} | Aegis Forensics Tracker{% endblock %}
-{% block header_title %}{{ 'Modify Forensic Investigation' if case else 'Initiate New Investigation' }}{% endblock %}
+{% block title %}{{ 'Edit Case' if case else 'Create Case' }} | TracePoint{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('list_cases') }}">Cases</a> / {{ 'Edit Case' if case else 'Create Case' }}{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto;">
+<div style="max-width: 760px; margin: 0 auto;">
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">{{ 'Edit Dossier Details' if case else 'Case Registration Details' }}</h3>
+            <h3 class="card-title">{{ 'Edit Case Details' if case else 'New Case Registration' }}</h3>
             <a href="{{ url_for('list_cases') }}" class="btn btn-secondary btn-sm">Cancel</a>
         </div>
         <div class="card-body">
             <form method="POST">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">Case Dossier Number</label>
+                        <label class="form-label">Case ID</label>
                         <input type="text" name="case_number" class="form-control font-mono" required
                                value="{{ case.case_number if case else default_case_number }}"
-                               placeholder="CASE-2026-XXXX">
+                               placeholder="CASE-2026-0001">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Operational Priority</label>
+                        <label class="form-label">Priority</label>
                         <select name="priority" class="form-control" required>
-                            <option value="Critical" {% if case and case.priority == 'Critical' %}selected{% endif %}>Critical (Active Incident / Data Exfiltration)</option>
-                            <option value="High" {% if case and case.priority == 'High' %}selected{% endif %}>High (Ransomware / High Impact)</option>
-                            <option value="Medium" {% if (case and case.priority == 'Medium') or not case %}selected{% endif %}>Medium (Internal Fraud / IP Violation)</option>
-                            <option value="Low" {% if case and case.priority == 'Low' %}selected{% endif %}>Low (Compliance / Routine Audit)</option>
+                            <option value="Critical" {% if case and case.priority == 'Critical' %}selected{% endif %}>Critical</option>
+                            <option value="High" {% if case and case.priority == 'High' %}selected{% endif %}>High</option>
+                            <option value="Medium" {% if (case and case.priority == 'Medium') or not case %}selected{% endif %}>Medium</option>
+                            <option value="Low" {% if case and case.priority == 'Low' %}selected{% endif %}>Low</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Investigation Title</label>
+                    <label class="form-label">Case Title</label>
                     <input type="text" name="title" class="form-control" required
                            value="{{ case.title if case else '' }}"
-                           placeholder="e.g. Operation Silent Vault: Swift Gateway Infiltration">
+                           placeholder="e.g. Unauthorized Database Access Investigation">
                 </div>
 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">Operational Status</label>
+                        <label class="form-label">Status</label>
                         <select name="status" class="form-control" required>
                             <option value="Open" {% if (case and case.status == 'Open') or not case %}selected{% endif %}>Open</option>
                             <option value="In Progress" {% if case and case.status == 'In Progress' %}selected{% endif %}>In Progress</option>
@@ -51,11 +51,11 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Lead Investigator Assignment</label>
+                        <label class="form-label">Assigned Investigator</label>
                         <select name="investigator_id" class="form-control" required>
                             {% for u in investigators %}
                                 <option value="{{ u.user_id }}" {% if (case and case.investigator_id == u.user_id) or (not case and u.user_id == session.get('user_id')) %}selected{% endif %}>
-                                    {{ u.full_name }} ({{ u.role }} - {{ u.badge_number or 'No Badge' }})
+                                    {{ u.full_name }} ({{ u.role }})
                                 </option>
                             {% endfor %}
                         </select>
@@ -63,20 +63,20 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Incident Discovery / Occurred Date</label>
+                    <label class="form-label">Incident Date</label>
                     <input type="date" name="incident_date" class="form-control"
                            value="{{ case.incident_date.strftime('%Y-%m-%d') if case and case.incident_date else '' }}">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Dossier Narrative & Scope</label>
-                    <textarea name="description" class="form-control" rows="4" placeholder="Detail suspected breach vectors, targeted endpoints, affected departments, and legal authorities...">{{ case.description if case else '' }}</textarea>
+                    <label class="form-label">Description & Scope</label>
+                    <textarea name="description" class="form-control" rows="4" placeholder="Enter investigation scope, suspected systems, and incident overview...">{{ case.description if case else '' }}</textarea>
                 </div>
 
-                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem;">
                     <a href="{{ url_for('list_cases') }}" class="btn btn-secondary">Cancel</a>
                     <button type="submit" class="btn btn-primary">
-                        {{ 'Update Case Dossier' if case else 'Create Investigation' }}
+                        {{ 'Save Changes' if case else 'Create Case' }}
                     </button>
                 </div>
             </form>

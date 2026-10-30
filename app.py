@@ -301,8 +301,11 @@ def dashboard():
             break
         bytes_val /= 1024.0
 
+    pending_verification = max(0, total_evidence - verified_count - compromised_count)
+
     recent_cases = Investigation.query.order_by(Investigation.created_at.desc()).limit(5).all()
-    recent_audits = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(8).all()
+    recent_evidence = Evidence.query.order_by(Evidence.collected_at.desc()).limit(5).all()
+    recent_audits = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(6).all()
 
     return render_template(
         "dashboard.html",
@@ -312,8 +315,10 @@ def dashboard():
         total_transfers=total_transfers,
         verified_count=verified_count,
         compromised_count=compromised_count,
+        pending_verification=pending_verification,
         total_size_formatted=total_size_formatted,
         recent_cases=recent_cases,
+        recent_evidence=recent_evidence,
         recent_audits=recent_audits
     )
 

@@ -1,60 +1,60 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | Aegis Forensics Tracker{% endblock %}
-{% block header_title %}Operational Command Dashboard{% endblock %}
+{% block title %}Dashboard | TracePoint{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Live Tamper Alert Banner (if compromised items detected) -->
+<!-- File Mismatch / Integrity Alert (Only shown if compromised artifacts exist) -->
 {% if compromised_count and compromised_count > 0 %}
 <div class="tamper-banner">
     <div class="tamper-content">
-        <h3>🚨 TAMPER INCIDENT ALERT: {{ compromised_count }} Compromised Evidence Artifact(s) Detected</h3>
-        <p>Cryptographic hash verification failed for recorded evidence items. Chain of custody or storage integrity may be compromised.</p>
+        <h3>File Integrity Alert: {{ compromised_count }} Artifact(s) Failed SHA-256 Verification</h3>
+        <p>A hash mismatch was detected during file verification. The stored file contents do not match the recorded cryptographic baseline.</p>
     </div>
     <a href="{{ url_for('list_evidence', filter='compromised') }}" class="btn btn-danger btn-sm">
-        Review Compromised Artifacts
+        Review Mismatches
     </a>
 </div>
 {% endif %}
 
-<!-- Stats Cards Grid -->
+<!-- Summary Cards Grid -->
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-header">
-            <span class="stat-title">Active Investigations</span>
+            <span class="stat-title">Active Cases</span>
             <span class="stat-icon">📁</span>
         </div>
-        <div class="stat-value">{{ total_cases }}</div>
-        <div class="stat-subtext">{{ open_cases }} Open / In Progress</div>
+        <div class="stat-value">{{ open_cases }}</div>
+        <div class="stat-subtext">{{ total_cases }} Total Cases Recorded</div>
     </div>
 
-    <div class="stat-card emerald">
+    <div class="stat-card">
         <div class="stat-header">
-            <span class="stat-title">Digital Evidence</span>
+            <span class="stat-title">Registered Evidence</span>
             <span class="stat-icon">💾</span>
         </div>
         <div class="stat-value">{{ total_evidence }}</div>
-        <div class="stat-subtext">{{ total_size_formatted }} Total Forensic Storage</div>
+        <div class="stat-subtext">{{ total_size_formatted }} Total File Storage</div>
     </div>
 
-    <div class="stat-card {% if compromised_count > 0 %}rose{% else %}emerald{% endif %}">
+    <div class="stat-card">
         <div class="stat-header">
-            <span class="stat-title">Integrity Assurance</span>
+            <span class="stat-title">Integrity Status</span>
             <span class="stat-icon">🛡️</span>
         </div>
         <div class="stat-value">{{ verified_count }} / {{ total_evidence }}</div>
         <div class="stat-subtext">
             {% if compromised_count > 0 %}
-                <span style="color: var(--danger-rose); font-weight: 700;">⚠️ {{ compromised_count }} Hash Mismatch</span>
+                <span style="color: var(--danger); font-weight: 600;">{{ compromised_count }} File Mismatch Detected</span>
             {% else %}
-                <span style="color: var(--forensic-emerald);">✓ 100% Cryptographic Match</span>
+                <span style="color: var(--success); font-weight: 600;">All Checked Files Match</span>
             {% endif %}
         </div>
     </div>
 
-    <div class="stat-card purple">
+    <div class="stat-card">
         <div class="stat-header">
-            <span class="stat-title">Custody Movements</span>
+            <span class="stat-title">Custody Transfers</span>
             <span class="stat-icon">🔗</span>
         </div>
         <div class="stat-value">{{ total_transfers }}</div>
@@ -62,12 +62,12 @@
     </div>
 </div>
 
-<!-- Charts Grid -->
+<!-- Compact Operational Charts -->
 <div class="charts-grid">
     <div class="chart-card">
         <div class="chart-header">
-            <h3 class="chart-title">Evidence Classification Distribution</h3>
-            <span class="chart-badge">BY FORENSIC TYPE</span>
+            <h3 class="chart-title">Evidence by Type</h3>
+            <span class="chart-badge">CLASSIFICATION</span>
         </div>
         <div class="chart-wrapper">
             <canvas id="chart-evidence-types"></canvas>
@@ -76,146 +76,175 @@
 
     <div class="chart-card">
         <div class="chart-header">
-            <h3 class="chart-title">Investigations by Operational Status</h3>
-            <span class="chart-badge">ACTIVE DOSSIERS</span>
+            <h3 class="chart-title">Cases by Status</h3>
+            <span class="chart-badge">LIFECYCLE</span>
         </div>
         <div class="chart-wrapper">
             <canvas id="chart-cases-status"></canvas>
         </div>
     </div>
-
-    <div class="chart-card">
-        <div class="chart-header">
-            <h3 class="chart-title">Cryptographic Integrity Status</h3>
-            <span class="chart-badge">SHA-256 ASSURANCE</span>
-        </div>
-        <div class="chart-wrapper">
-            <canvas id="chart-integrity-status"></canvas>
-        </div>
-    </div>
-
-    <div class="chart-card">
-        <div class="chart-header">
-            <h3 class="chart-title">Chain of Custody Movements</h3>
-            <span class="chart-badge">TRANSACTION ACTIVITY</span>
-        </div>
-        <div class="chart-wrapper">
-            <canvas id="chart-custody-timeline"></canvas>
-        </div>
-    </div>
 </div>
 
-<!-- Operational Quick Actions -->
-<div class="card" style="margin-bottom: 2rem;">
+<!-- Quick Action Shortcuts -->
+<div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header">
-        <h3 class="card-title">Forensic Operations Quick Actions</h3>
+        <h3 class="card-title">Quick Actions</h3>
     </div>
-    <div class="card-body" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <div class="card-body" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
         <a href="{{ url_for('create_case') }}" class="btn btn-primary">
-            <span>➕</span> Initiate Investigation
+            <span>➕</span> Create Case
         </a>
-        <a href="{{ url_for('add_evidence') }}" class="btn btn-emerald">
-            <span>💾</span> Register & Hash Evidence
+        <a href="{{ url_for('add_evidence') }}" class="btn btn-secondary">
+            <span>💾</span> Add Evidence
         </a>
         <a href="{{ url_for('custody_hub') }}" class="btn btn-secondary">
-            <span>🔗</span> Record Custody Transfer
+            <span>🔗</span> Transfer Evidence
+        </a>
+        <a href="{{ url_for('list_evidence', filter='verified') }}" class="btn btn-secondary">
+            <span>🛡️</span> Verify Files
         </a>
         <a href="{{ url_for('audit_logs') }}" class="btn btn-secondary">
-            <span>📜</span> View Trigger Audit Trail
+            <span>📜</span> View Audit Log
         </a>
     </div>
 </div>
 
-<!-- Recent Cases & Evidence Dual Panels -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.5rem;">
-    <!-- Active Cases -->
-    <div class="card">
+<!-- Dual Panels: Recent Cases & Recent Evidence -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+    <!-- Recent Cases -->
+    <div class="card" style="margin-bottom: 0;">
         <div class="card-header">
-            <h3 class="card-title">Recent Active Investigations</h3>
-            <a href="{{ url_for('list_cases') }}" style="color: var(--cyber-blue); font-size: 0.8rem; text-decoration: none;">View All →</a>
+            <h3 class="card-title">Recent Cases</h3>
+            <a href="{{ url_for('list_cases') }}" style="color: var(--primary); font-size: 0.8rem; text-decoration: none; font-weight: 500;">View All →</a>
         </div>
         <div class="table-responsive">
             <table class="forensic-table">
                 <thead>
                     <tr>
-                        <th>Case #</th>
+                        <th>Case ID</th>
                         <th>Title</th>
-                        <th>Lead</th>
-                        <th>Status</th>
+                        <th>Investigator</th>
                         <th>Priority</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for c in recent_cases %}
                     <tr>
                         <td class="font-mono">
-                            <a href="{{ url_for('view_case', case_id=c.investigation_id) }}" style="color: var(--cyber-blue); text-decoration: none; font-weight: 600;">
+                            <a href="{{ url_for('view_case', case_id=c.investigation_id) }}" style="color: var(--primary); text-decoration: none; font-weight: 600;">
                                 {{ c.case_number }}
                             </a>
                         </td>
-                        <td style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <td style="max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             {{ c.title }}
                         </td>
                         <td>{{ c.investigator.full_name }}</td>
-                        <td>
-                            <span class="badge {% if c.status == 'Open' %}badge-custody{% elif c.status == 'In Progress' %}badge-verified{% else %}badge-collected{% endif %}">
-                                {{ c.status }}
-                            </span>
-                        </td>
                         <td>
                             <span class="badge {% if c.priority == 'Critical' %}badge-critical{% elif c.priority == 'High' %}badge-high{% else %}badge-medium{% endif %}">
                                 {{ c.priority }}
                             </span>
                         </td>
+                        <td>
+                            <span class="badge {% if c.status == 'Open' %}badge-custody{% elif c.status == 'In Progress' %}badge-verified{% else %}badge-collected{% endif %}">
+                                {{ c.status }}
+                            </span>
+                        </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No investigations found</td></tr>
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No cases recorded</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Latest Trigger Audit Logs -->
-    <div class="card">
+    <!-- Recent Evidence -->
+    <div class="card" style="margin-bottom: 0;">
         <div class="card-header">
-            <h3 class="card-title">Automated PostgreSQL Trigger Audits</h3>
-            <a href="{{ url_for('audit_logs') }}" style="color: var(--cyber-blue); font-size: 0.8rem; text-decoration: none;">View Full Log →</a>
+            <h3 class="card-title">Recent Evidence</h3>
+            <a href="{{ url_for('list_evidence') }}" style="color: var(--primary); font-size: 0.8rem; text-decoration: none; font-weight: 500;">View All →</a>
         </div>
         <div class="table-responsive">
             <table class="forensic-table">
                 <thead>
                     <tr>
-                        <th>Time</th>
-                        <th>Action</th>
-                        <th>Table</th>
-                        <th>User</th>
-                        <th>Details</th>
+                        <th>Evidence ID</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Custodian</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for l in recent_audits %}
+                    {% for ev in recent_evidence %}
                     <tr>
-                        <td class="font-mono" style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap;">
-                            {{ l.timestamp.strftime('%H:%M:%S') }}
+                        <td class="font-mono">
+                            <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                                {{ ev.evidence_number }}
+                            </a>
                         </td>
+                        <td style="max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ ev.evidence_name }}
+                        </td>
+                        <td>{{ ev.evidence_type }}</td>
+                        <td>{{ ev.designated_custodian.full_name }}</td>
                         <td>
-                            <span class="badge {% if l.action == 'INSERT' %}badge-verified{% elif l.action == 'UPDATE' %}badge-medium{% elif l.action == 'DELETE' %}badge-critical{% else %}badge-custody{% endif %}">
-                                {{ l.action }}
+                            <span class="badge {% if ev.status == 'Verified' %}badge-verified{% elif ev.status == 'Compromised' %}badge-compromised{% elif ev.status == 'In Custody' %}badge-custody{% else %}badge-collected{% endif %}">
+                                {{ ev.status }}
                             </span>
-                        </td>
-                        <td class="font-mono" style="font-size: 0.78rem;">{{ l.table_name }}</td>
-                        <td>{{ l.user.full_name if l.user else 'System Trigger' }}</td>
-                        <td style="max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; color: var(--text-secondary);">
-                            {{ l.details }}
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No audit events recorded</td></tr>
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No evidence recorded</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<!-- Recent Activity / Audit Log -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Activity (Database Triggers)</h3>
+        <a href="{{ url_for('audit_logs') }}" style="color: var(--primary); font-size: 0.8rem; text-decoration: none; font-weight: 500;">View Full Audit Log →</a>
+    </div>
+    <div class="table-responsive">
+        <table class="forensic-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Table</th>
+                    <th>Record ID</th>
+                    <th>User</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in recent_audits %}
+                <tr>
+                    <td class="font-mono" style="font-size: 0.75rem; white-space: nowrap; color: var(--text-secondary);">
+                        {{ l.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </td>
+                    <td>
+                        <span class="badge {% if l.action == 'INSERT' %}badge-verified{% elif l.action == 'UPDATE' %}badge-medium{% elif l.action == 'DELETE' %}badge-critical{% else %}badge-custody{% endif %}">
+                            {{ l.action }}
+                        </span>
+                    </td>
+                    <td class="font-mono" style="font-size: 0.78rem;">{{ l.table_name }}</td>
+                    <td class="font-mono" style="font-size: 0.78rem;">#{{ l.record_id or '—' }}</td>
+                    <td>{{ l.user.full_name if l.user else 'System' }}</td>
+                    <td style="max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; color: var(--text-secondary);">
+                        {{ l.details }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No recent activity logged</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

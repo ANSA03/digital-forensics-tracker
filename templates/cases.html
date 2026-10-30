@@ -1,30 +1,34 @@
 {% extends "base.html" %}
 
-{% block title %}Investigations | Aegis Forensics Tracker{% endblock %}
-{% block header_title %}Forensic Investigations & Dossiers{% endblock %}
+{% block title %}Cases | TracePoint{% endblock %}
+{% block breadcrumb %}Cases{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <!-- Search & Filter Controls -->
-    <div style="display: flex; gap: 1rem; align-items: center; flex-grow: 1; max-width: 550px;">
-        <input type="text" data-table-search="cases-table" class="form-control" placeholder="Search by case #, title, investigator, or status...">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <!-- Search Bar -->
+    <div style="flex-grow: 1; max-width: 500px;">
+        <input type="text" data-table-search="cases-table" class="form-control" placeholder="Search cases by ID, title, investigator, or status...">
     </div>
 
     <div>
         <a href="{{ url_for('create_case') }}" class="btn btn-primary">
-            <span>➕</span> New Investigation
+            <span>➕</span> Create Case
         </a>
     </div>
 </div>
 
 <div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Investigation Cases</h3>
+        <span class="chart-badge">{{ cases|length }} Cases</span>
+    </div>
     <div class="table-responsive">
         <table class="forensic-table" id="cases-table">
             <thead>
                 <tr>
-                    <th>Case Number</th>
-                    <th>Investigation Title</th>
-                    <th>Lead Investigator</th>
+                    <th>Case ID</th>
+                    <th>Case Title</th>
+                    <th>Assigned Investigator</th>
                     <th>Evidence Items</th>
                     <th>Priority</th>
                     <th>Status</th>
@@ -36,7 +40,7 @@
                 {% for c in cases %}
                 <tr>
                     <td class="font-mono">
-                        <a href="{{ url_for('view_case', case_id=c.investigation_id) }}" style="color: var(--cyber-blue); text-decoration: none; font-weight: 700;">
+                        <a href="{{ url_for('view_case', case_id=c.investigation_id) }}" style="color: var(--primary); text-decoration: none; font-weight: 700;">
                             {{ c.case_number }}
                         </a>
                     </td>
@@ -48,9 +52,9 @@
                     </td>
                     <td>
                         <div style="font-weight: 500;">{{ c.investigator.full_name }}</div>
-                        <div style="font-size: 0.72rem; color: var(--text-muted);">{{ c.investigator.badge_number or 'Badge N/A' }}</div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">{{ c.investigator.department or 'Investigation Dept' }}</div>
                     </td>
-                    <td style="text-align: center;">
+                    <td>
                         <span class="badge badge-custody" style="font-family: var(--font-mono);">
                             {{ c.evidence_items.count() }} items
                         </span>
@@ -65,13 +69,13 @@
                             {{ c.status }}
                         </span>
                     </td>
-                    <td class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">
+                    <td class="font-mono" style="font-size: 0.75rem; color: var(--text-secondary);">
                         {{ c.created_at.strftime('%Y-%m-%d') }}
                     </td>
                     <td>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.4rem;">
                             <a href="{{ url_for('view_case', case_id=c.investigation_id) }}" class="btn btn-secondary btn-sm">
-                                View
+                                View Details
                             </a>
                             <a href="{{ url_for('edit_case', case_id=c.investigation_id) }}" class="btn btn-secondary btn-sm">
                                 Edit
@@ -82,7 +86,7 @@
                 {% else %}
                 <tr>
                     <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                        No forensic investigations found. Initiate a new case above.
+                        No cases found. Click "Create Case" above to start an investigation.
                     </td>
                 </tr>
                 {% endfor %}

@@ -1,14 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Investigator Registration | Aegis Forensics Tracker{% endblock %}
+{% block title %}Register Account | TracePoint{% endblock %}
 
 {% block auth_content %}
 <div class="auth-page">
-    <div class="auth-card" style="max-width: 500px;">
+    <div class="auth-card" style="max-width: 460px;">
         <div class="auth-header">
-            <div class="brand-icon" style="margin: 0 auto; width: 44px; height: 44px; font-size: 1.4rem;">⚡</div>
-            <h2>Register Forensic Officer</h2>
-            <p>Access Digital Forensics Evidence Management</p>
+            <div style="display: flex; justify-content: center; margin-bottom: 0.5rem;">
+                <div class="brand-icon" style="width: 44px; height: 44px; background: #243247; border-color: #3B4D66;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 7V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V9C21 7.89543 20.1046 7 19 7H11L9 5H5C3.89543 5 3 5.89543 3 7Z" fill="#1C2737" stroke="#8EA4BE" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8.5 13.5L11 16L15.5 11" stroke="#39805B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+            <h2>Register Account</h2>
+            <p>TracePoint Case & Evidence Management</p>
         </div>
 
         <div class="auth-body">
@@ -24,48 +31,48 @@
 
             <form method="POST" action="{{ url_for('register') }}">
                 <div class="form-group">
-                    <label class="form-label">Full Name & Title</label>
-                    <input type="text" name="full_name" class="form-control" required placeholder="Special Agent John Doe">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="full_name" class="form-control" required placeholder="Alex Cross">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Official Agency Email</label>
-                    <input type="email" name="email" class="form-control" required placeholder="john.doe@forensics.local">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-control" required placeholder="alex.cross@forensics.local">
                 </div>
 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">Badge / ID Number</label>
-                        <input type="text" name="badge_number" class="form-control" placeholder="DF-552">
+                        <label class="form-label">Badge Number</label>
+                        <input type="text" name="badge_number" class="form-control" placeholder="DF-104">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Operational Role</label>
+                        <label class="form-label">Role</label>
                         <select name="role" class="form-control" required>
                             <option value="Forensic Analyst">Forensic Analyst</option>
                             <option value="Lead Investigator">Lead Investigator</option>
                             <option value="Investigator">Investigator</option>
-                            <option value="Auditor">Auditor (Read-Only)</option>
+                            <option value="Auditor">Auditor</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Department / Unit</label>
-                    <input type="text" name="department" class="form-control" placeholder="Cyber Incident Response Unit">
+                    <label class="form-label">Department</label>
+                    <input type="text" name="department" class="form-control" placeholder="Digital Evidence Unit">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Secure Passphrase</label>
-                    <input type="password" name="password" minlength="8" class="form-control" required placeholder="Minimum 8 characters">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" minlength="8" class="form-control" required placeholder="At least 8 characters">
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
-                    Submit Registration
+                    Create Account
                 </button>
             </form>
 
-            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--text-muted);">
-                Already registered? <a href="{{ url_for('login') }}" style="color: var(--cyber-blue); text-decoration: none;">Return to Login</a>
+            <div style="text-align: center; margin-top: 1.15rem; font-size: 0.8rem; color: var(--text-secondary);">
+                Already have an account? <a href="{{ url_for('login') }}" style="color: var(--primary); text-decoration: none; font-weight: 500;">Sign In</a>
             </div>
         </div>
     </div>

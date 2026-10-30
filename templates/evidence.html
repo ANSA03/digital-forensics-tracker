@@ -1,41 +1,45 @@
 {% extends "base.html" %}
 
-{% block title %}Digital Evidence Registry | Aegis Forensics Tracker{% endblock %}
-{% block header_title %}Digital Evidence Master Registry{% endblock %}
+{% block title %}Evidence Register | TracePoint{% endblock %}
+{% block breadcrumb %}Evidence Register{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
     <!-- Search Bar -->
-    <div style="display: flex; gap: 1rem; align-items: center; flex-grow: 1; max-width: 600px;">
-        <input type="text" data-table-search="evidence-table" class="form-control" placeholder="Search by evidence #, artifact name, hash, case #, or custodian...">
+    <div style="flex-grow: 1; max-width: 500px;">
+        <input type="text" data-table-search="evidence-table" class="form-control" placeholder="Search by evidence ID, name, hash, case ID, or custodian...">
     </div>
 
-    <!-- Actions -->
-    <div style="display: flex; gap: 0.75rem;">
-        <a href="{{ url_for('list_evidence', filter='compromised') }}" class="btn btn-danger btn-sm">
-            🚨 Filter Compromised
+    <!-- Filters & Actions -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{{ url_for('list_evidence', filter='compromised') }}" class="btn btn-secondary btn-sm {% if current_filter == 'compromised' %}active{% endif %}" style="color: var(--danger);">
+            Mismatches
         </a>
-        <a href="{{ url_for('list_evidence', filter='verified') }}" class="btn btn-emerald btn-sm">
-            🛡️ Filter Verified
+        <a href="{{ url_for('list_evidence', filter='verified') }}" class="btn btn-secondary btn-sm {% if current_filter == 'verified' %}active{% endif %}" style="color: var(--success);">
+            Verified
         </a>
-        <a href="{{ url_for('list_evidence') }}" class="btn btn-secondary btn-sm">
-            Show All
+        <a href="{{ url_for('list_evidence') }}" class="btn btn-secondary btn-sm {% if not current_filter %}active{% endif %}">
+            All
         </a>
-        <a href="{{ url_for('add_evidence') }}" class="btn btn-primary">
-            <span>➕</span> Register New Evidence
+        <a href="{{ url_for('add_evidence') }}" class="btn btn-primary btn-sm">
+            <span>➕</span> Add Evidence
         </a>
     </div>
 </div>
 
 <div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Registered Evidence Artifacts</h3>
+        <span class="chart-badge">{{ evidence_items|length }} Artifacts</span>
+    </div>
     <div class="table-responsive">
         <table class="forensic-table" id="evidence-table">
             <thead>
                 <tr>
-                    <th>Evidence #</th>
+                    <th>Evidence ID</th>
                     <th>Artifact Name</th>
-                    <th>Case Dossier</th>
-                    <th>Classification</th>
+                    <th>Related Case</th>
+                    <th>Type</th>
                     <th>File Size</th>
                     <th>SHA-256 Digest</th>
                     <th>Integrity Status</th>
@@ -47,7 +51,7 @@
                 {% for ev in evidence_items %}
                 <tr>
                     <td class="font-mono">
-                        <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" style="color: var(--cyber-blue); text-decoration: none; font-weight: 700;">
+                        <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" style="color: var(--primary); text-decoration: none; font-weight: 700;">
                             {{ ev.evidence_number }}
                         </a>
                     </td>
@@ -57,7 +61,7 @@
                             Location: {{ ev.storage_location }}
                         </div>
                     </td>
-                    <td class="font-mono" style="font-size: 0.78rem;">
+                    <td class="font-mono" style="font-size: 0.75rem;">
                         <a href="{{ url_for('view_case', case_id=ev.investigation.investigation_id) }}" style="color: var(--text-secondary); text-decoration: none;">
                             {{ ev.investigation.case_number }}
                         </a>
@@ -80,7 +84,7 @@
                     </td>
                     <td>
                         <span class="badge {% if ev.status == 'Verified' %}badge-verified{% elif ev.status == 'Compromised' %}badge-compromised{% elif ev.status == 'In Custody' %}badge-custody{% else %}badge-collected{% endif %}">
-                            {{ ev.status }}
+                            {{ 'File Verified' if ev.status == 'Verified' else ('File Mismatch' if ev.status == 'Compromised' else ev.status) }}
                         </span>
                     </td>
                     <td>
@@ -90,11 +94,11 @@
                     <td>
                         <div style="display: flex; gap: 0.35rem;">
                             <a href="{{ url_for('view_evidence', evidence_id=ev.evidence_id) }}" class="btn btn-secondary btn-sm">
-                                Details
+                                View Details
                             </a>
                             <form method="POST" action="{{ url_for('verify_evidence', evidence_id=ev.evidence_id) }}" style="display: inline;">
-                                <button type="submit" class="btn btn-emerald btn-sm" title="Recompute and verify hash">
-                                    🛡️
+                                <button type="submit" class="btn btn-emerald btn-sm" title="Recompute SHA-256 and verify">
+                                    Verify
                                 </button>
                             </form>
                         </div>
@@ -103,7 +107,7 @@
                 {% else %}
                 <tr>
                     <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                        No digital evidence records match the current filter.
+                        No evidence records match the current filter.
                     </td>
                 </tr>
                 {% endfor %}
